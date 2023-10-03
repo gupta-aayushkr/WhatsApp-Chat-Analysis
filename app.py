@@ -6,6 +6,10 @@ from wordcloud import WordCloud
 import pandas as pd
 from collections import Counter
 import emoji
+import matplotlib.pyplot as plt
+# import matplotlib
+# matplotlib.use('Agg')
+import plotly.express as px
 
 #-----------------------SECTION 1: DATA PREPROCESSING--------------------------------#
 
@@ -74,20 +78,7 @@ if uploaded_file is not None:
     num_media = df[df["message"].str.contains(r'omitted',case=False, regex=True)]["message"].value_counts().sum()
 
 
-        #     with col1:
-        #     st.header("Total Messages")
-        #     st.title(num_messages)
-        # with col2:
-        #     st.header("Total Words")
-        #     st.title(words)
-        # with col3:
-        #     st.header("Media Shared")
-        #     st.title(num_media_messages)
-        # with col4:
-        #     st.header("Links Shared")
-        #     st.title(num_links)
-
-    #After selecting user performing analysis
+    #After selecting displaying some basic stats
     if st.sidebar.button("Show Analysis"):
         st.title("Statistics")
         c1,c2,c3,c4 = st.columns(4)
@@ -104,7 +95,61 @@ if uploaded_file is not None:
         c3.header("Media Shared")
         c3.title(num_media)
 
-                #c3
+        #c3
         c4.header("Time Spent(Days)")
         c4.title(round((num_words/(60*24)),2))
+
+    # finding the busiest users in the group(Group level)
+        if selected_user == 'Overall':
+            st.title('Most Busy Users')
+            active_users_by_msg = df["user"].value_counts()[df["user"].value_counts()>10].reset_index().head(10)
+            overall_active_user_percent_df = round(df["user"].value_counts()[df["user"].value_counts()>10]/df.shape[0]*100).reset_index().rename(columns={'user':'Name', 'count':'Percent'})
+            col1, col2 = st.columns(2)
+
+            with col1:
+                plt.bar(active_users_by_msg["user"],active_users_by_msg["count"])
+                plt.xlabel("UserName")
+                plt.ylabel("Message Counts")
+                plt.title("User w.r.t. Message Counts")
+                plt.xticks(rotation='vertical')
+                st.pyplot(plt)
+            with col2:
+                st.dataframe(overall_active_user_percent_df, width=1000, height=300)
+        
+    #worldcloud for each user
+        st.header("WordCloud")
+        col1,col2 = st.columns(2)
+
+        text_data = df['message'].str.cat(sep=' ')
+
+        stopwords_file = open('stopwords.txt')
+        stopwords = stopwords_file.read()
+        stopwords_file.close()
+        all_stopwords = ['omitted', 'sticker', 'image', 'image image', 'sticker sticker', 'https'] + stopwords.split()
+
+        filtered_text_data = []
+        for word in text_data.split():
+            if word.lower() not in all_stopwords:
+                filtered_text_data.append(word)
+        filtered_text_data = " ".join(filtered_text_data)
+
+        wordcloud = WordCloud(width=800, height=400, background_color='white').generate(filtered_text_data)
+
+        with col1:
+            word_frequencies = wordcloud.words_
+            st.write("Word Frequencies in Message")
+            df2 = pd.DataFrame(word_frequencies.items())
+            df2.rename(columns={0:'Word',1:'Freq%'}, inplace=True)
+            df2['Freq%'] = round(df2['Freq%'] * 100,2)
+            st.dataframe(df2, width=1000)
+
+        with col2:
+            plt.clf()
+            st.subheader("WordCloud")
+            plt.figure(figsize=(10, 5))
+            plt.imshow(wordcloud, interpolation='bilinear')
+            plt.axis('off')
+            st.pyplot(plt)
+
+# not removing stopwords check tommorow
 
