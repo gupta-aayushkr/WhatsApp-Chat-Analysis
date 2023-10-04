@@ -13,6 +13,7 @@ st.set_page_config(
     page_title="WhatsApp Chat Analyzer",
     layout="wide")
 
+#For Reboot
 #-----------------------SECTION 1: DATA PREPROCESSING--------------------------------#
 
 def load_data(f):
