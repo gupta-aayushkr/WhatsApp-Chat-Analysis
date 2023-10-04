@@ -11,6 +11,11 @@ import matplotlib.pyplot as plt
 # matplotlib.use('Agg')
 import plotly.express as px
 
+st.set_page_config(
+    page_icon="💬",
+    page_title="WhatsApp Chat Analyzer",
+    layout="wide")
+
 #-----------------------SECTION 1: DATA PREPROCESSING--------------------------------#
 
 def load_data(f):
@@ -54,7 +59,7 @@ if uploaded_file is not None:
     bytes_data = uploaded_file.getvalue()
     data = bytes_data.decode("utf-8")
     df = load_data(data)
-    st.write(df)
+    # st.write(df)
 
     #Users
     users_list = df["user"].unique().tolist()
@@ -157,5 +162,73 @@ if uploaded_file is not None:
             plt.axis('off')
             st.pyplot(plt)
 
-# not removing stopwords check
+# Timeline analysis
+        st.title("Month & Day Activity")
+        col1, col2 = st.columns(2)
+        #month wise 
+        with col1:
+            st.write("Monthly Activity")
+            plt.clf()
+            df['month_num'] = df["date"].dt.month
+            timeline_df = df.groupby(['year','month_num', 'month']).count()["message"].reset_index()[1:]
+            time = []
+            for i in range(1, timeline_df.shape[0]+1):
+                time.append(timeline_df["month"][i] + '-' + str(timeline_df["year"][i]))
+            timeline_df['time'] = time
+            plt.bar(timeline_df['time'], timeline_df['message'], facecolor='green', alpha=0.6)
+            plt.scatter(timeline_df['time'], timeline_df['message'], color='blue', marker='o')
+            plt.plot(timeline_df['time'], timeline_df['message'], color='blue')
+            plt.xticks(rotation='vertical')
+            st.pyplot(plt)
 
+        #daily wise
+        with col2:
+            st.write("Daily Activity")
+            plt.clf()
+            df['only_date'] = df['date'].dt.date
+            daily_timeline_df = df.groupby('only_date').count()["message"].reset_index()[1:]
+            plt.scatter(daily_timeline_df['only_date'], daily_timeline_df['message'], color='red', marker='o', s=1)
+            plt.plot(daily_timeline_df['only_date'], daily_timeline_df['message'], color='red', alpha=0.2)
+            plt.xticks(rotation='vertical')
+            st.pyplot(plt)
+
+        st.title("Weekday & Hourly Activity")
+        col1, col2 = st.columns(2)
+        #weekday wise
+        with col1:
+            st.write("Weekday Activity")
+            plt.clf()
+            df['Weekday'] = df["date"].dt.day_name()
+            week_timeline_df = df['Weekday'].value_counts().reset_index()
+            plt.bar(week_timeline_df["Weekday"], week_timeline_df["count"], facecolor='green', alpha=0.6)
+            plt.scatter(week_timeline_df["Weekday"], week_timeline_df["count"], color='blue', marker='o')
+            plt.plot(week_timeline_df["Weekday"], week_timeline_df["count"], color='blue')
+            plt.xticks(rotation='vertical')
+            st.pyplot(plt)
+
+
+        #hour wise
+        with col2:
+            st.write("Hourly Activity")
+            plt.clf()
+            period = []
+            for hour in df[['hour','Weekday']]['hour']:
+                if hour == 23:
+                    period. append(str(hour) + "-" + str('00' ))
+                elif hour == 0:
+                    period.append(str('00') + "-" + str(hour+1))
+                else:
+                    period.append(str(hour) + "-" + str(hour+1))
+            df['period']=period
+            hour_timeline_df = df.groupby(['hour','period']).count()["message"].reset_index()
+            plt.bar(hour_timeline_df["hour"], hour_timeline_df["message"], facecolor='green', alpha=0.6)
+            plt.scatter(hour_timeline_df["hour"], hour_timeline_df["message"], color='blue', marker='o')
+            plt.plot(hour_timeline_df["hour"], hour_timeline_df["message"], color='blue')
+            plt.xticks(rotation='vertical')
+            st.pyplot(plt)
+
+        if selected_user != 'Overall':
+            st.title("Conclusion:")
+            user_most_active_weekday = df.groupby('Weekday').count()["message"].sort_values(ascending=False).reset_index()["Weekday"][1]
+            user_most_active_hour = df.groupby('hour').count()["message"].sort_values(ascending=False).reset_index()["hour"][1]
+            st.info(f"{selected_user} is mostly active on {user_most_active_weekday}. And Mostly prefers to message at {user_most_active_hour}.")
