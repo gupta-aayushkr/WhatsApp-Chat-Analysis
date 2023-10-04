@@ -120,28 +120,34 @@ if uploaded_file is not None:
         st.header("WordCloud")
         col1,col2 = st.columns(2)
 
-        text_data = df['message'].str.cat(sep=' ')
+        message_data = df['message'].str.cat(sep=' ')
+        message_data = message_data.lower()
+        message_data = re.sub('[^a-zA-Z]', ' ', message_data)
+        message_data = re.sub('\s+',' ', message_data)
 
+        #importing the stopwords
         stopwords_file = open('stopwords.txt')
         stopwords = stopwords_file.read()
         stopwords_file.close()
-        all_stopwords = ['omitted', 'sticker', 'image', 'image image', 'sticker sticker', 'https'] + stopwords.split()
+        all_stopwords = stopwords.split() + ['haa','kr', 'omitted', 'sticker', 'image', 'https', 'www']
 
+        # filtered message data after removing stopwordss
         filtered_text_data = []
-        for word in text_data.split():
+        for word in message_data.split():
             if word.lower() not in all_stopwords:
                 filtered_text_data.append(word)
         filtered_text_data = " ".join(filtered_text_data)
 
+        # To view in filtered DF
+        filtered_text_df = pd.DataFrame(filtered_text_data.split(), columns=["Words"])
+        filtered_text_df = filtered_text_df.value_counts().reset_index()
+        filtered_text_df["Freq. %"] = round((filtered_text_df["count"]/filtered_text_df["count"].sum())*100,2)
+
         wordcloud = WordCloud(width=800, height=400, background_color='white').generate(filtered_text_data)
 
         with col1:
-            word_frequencies = wordcloud.words_
             st.write("Word Frequencies in Message")
-            df2 = pd.DataFrame(word_frequencies.items())
-            df2.rename(columns={0:'Word',1:'Freq%'}, inplace=True)
-            df2['Freq%'] = round(df2['Freq%'] * 100,2)
-            st.dataframe(df2, width=1000)
+            st.dataframe(filtered_text_df, width=1000)
 
         with col2:
             plt.clf()
@@ -151,5 +157,5 @@ if uploaded_file is not None:
             plt.axis('off')
             st.pyplot(plt)
 
-# not removing stopwords check tommorow
+# not removing stopwords check
 
