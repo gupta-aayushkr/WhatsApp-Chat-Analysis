@@ -5,6 +5,7 @@ from wordcloud import WordCloud
 import pandas as pd
 import matplotlib.pyplot as plt
 import plotly.express as px
+import os
 
 st.set_page_config(
     page_icon="💬",
@@ -17,7 +18,7 @@ st.set_page_config(
 def load_data(f):
     #data from text file
     data = f
-
+    # st.write(data)
     #separting message and date
     pattern = "\[\d{1,2}/\d{1,2}/\d{1,2},\s\d{1,2}:\d{1,2}:\d{1,2}\s[APap][Mm]\]\s"
     message = re.split(pattern, data)[1:]
@@ -49,12 +50,37 @@ def load_data(f):
 #-----------------------SECTION 3: MAIN--------------------------------#
 
 st.sidebar.title("WhatsApp Chat Analyzer")
-uploaded_file = st.sidebar.file_uploader("Choose a file")
+# st.sidebar.selectbox("Select a File")
+# uploaded_file = st.sidebar.file_uploader("Choose a file")
+# st.write(uploaded_file)
 
-if uploaded_file is not None:
-    bytes_data = uploaded_file.getvalue()
-    data = bytes_data.decode("utf-8")
+file1 = st.sidebar.file_uploader("Choose a file")
+
+txt_files = []
+
+if file1 is None:
+        txt_folder_path = "TXT"
+        txt_files = []
+        for file in os.listdir(txt_folder_path):
+                if file.endswith(".txt"):
+                        txt_files.append(file)
+        file1 = st.sidebar.selectbox("Select a txt file", txt_files)
+        file1 = os.path.join(txt_folder_path, file1)
+        # st.write(file1)
+        f = open(file1)
+        data = f.read()
+        f.close()
+        # data = pd.read_txt(os.path.join(txt_folder_path, selected_txt))
+else:
+        f = open(file1)
+        data = f.read()
+        f.close()
+
+if file1 is not None:
+    # bytes_data = file1.getvalue()
+    # data = bytes_data.decode("utf-8")
     df = load_data(data)
+    # st.write(df)
     # st.write(df)
 
     #Users
@@ -90,8 +116,8 @@ if uploaded_file is not None:
         nested_c1_right.metric("Time Spent(Days)",round((num_words/(60*24)),2))
     
         #Dataframe
-        c2.write("WhatsApp Messages")
-        c2.dataframe(df, height=300)
+        c2.write("10 Starting WhatsApp Messages (Not shown all for privacy)")
+        c2.dataframe(df.head(10), height=300)
 
     # finding the busiest users in the group(Group level)
         if selected_user == 'Overall':
