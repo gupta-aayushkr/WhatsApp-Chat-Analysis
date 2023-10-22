@@ -1,4 +1,3 @@
-```markdown
 # WhatsApp Chat Analyzer
 
 WhatsApp Chat Analyzer is an interactive and feature-rich tool that helps you gain valuable insights from your WhatsApp chat history. Analyze your conversations, discover patterns, and extract meaningful information about your chats.
@@ -78,4 +77,3 @@ python chat_analyzer.py
 ## Author
 
 - Aayush Kumar Gupta
-```
